@@ -1,0 +1,6 @@
+There are some issues with the g++
+I found that using this works:
+
+~/code/cpp_projects/eclipse/workspace/TestRtMidi/Debug$ g++  -o "TestRtMidi"  ./src/TestRtMidi2.o ./src/midiprobe.o   -l rtmidi
+#Note ommitting "lib" prefix and ".so"  suffix 
+It will find it in the default search path
