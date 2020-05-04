@@ -44,7 +44,7 @@ all: TestRtMidi
 TestRtMidi: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
-	g++  -o "TestRtMidi" $(OBJS) $(USER_OBJS) $(LIBS)
+	g++ -pthread -o "TestRtMidi" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 

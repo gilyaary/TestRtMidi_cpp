@@ -9,7 +9,7 @@
 #include <map>
 #include "RtMidi.h"
 
-int main()
+int main2()
 {
   // Create an api map.
   std::map<int, std::string> apiMap;
@@ -19,11 +19,14 @@ int main()
   apiMap[RtMidi::LINUX_ALSA] = "Linux ALSA";
   apiMap[RtMidi::RTMIDI_DUMMY] = "RtMidi Dummy";
 
+  //when compiling RtMidi we can select which APIs to compile (#ifdef, #ifndef)
+  //curretly we have Alsa and Jack
   std::vector< RtMidi::Api > apis;
   RtMidi :: getCompiledApi( apis );
 
   std::cout << "\nCompiled APIs:\n";
   for ( unsigned int i=0; i<apis.size(); i++ )
+	//map the numbers assigned by RtMidi::RTMIDI_DUMMY to the String name as defined above
     std::cout << "  " << apiMap[ apis[i] ] << std::endl;
 
   RtMidiIn  *midiin = 0;
