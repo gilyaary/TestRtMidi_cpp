@@ -4,15 +4,45 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
-../src/TestRtMidi2.cpp \
+../src/CommandBuilder.cpp \
+../src/CommandBuilder_test.cpp \
+../src/GetInfoCmd.cpp \
+../src/GetInfoCmd_test.cpp \
+../src/Main.cpp \
+../src/ReceiveMessagesCmd.cpp \
+../src/ReceiveMessagesCmd_test.cpp \
+../src/RtMidiCommand.cpp \
+../src/StringTokenizer.cpp \
+../src/TransmitMessageCmd.cpp \
+../src/TransmitMessageCmd_test.cpp \
 ../src/midiprobe.cpp 
 
 OBJS += \
-./src/TestRtMidi2.o \
+./src/CommandBuilder.o \
+./src/CommandBuilder_test.o \
+./src/GetInfoCmd.o \
+./src/GetInfoCmd_test.o \
+./src/Main.o \
+./src/ReceiveMessagesCmd.o \
+./src/ReceiveMessagesCmd_test.o \
+./src/RtMidiCommand.o \
+./src/StringTokenizer.o \
+./src/TransmitMessageCmd.o \
+./src/TransmitMessageCmd_test.o \
 ./src/midiprobe.o 
 
 CPP_DEPS += \
-./src/TestRtMidi2.d \
+./src/CommandBuilder.d \
+./src/CommandBuilder_test.d \
+./src/GetInfoCmd.d \
+./src/GetInfoCmd_test.d \
+./src/Main.d \
+./src/ReceiveMessagesCmd.d \
+./src/ReceiveMessagesCmd_test.d \
+./src/RtMidiCommand.d \
+./src/StringTokenizer.d \
+./src/TransmitMessageCmd.d \
+./src/TransmitMessageCmd_test.d \
 ./src/midiprobe.d 
 
 
@@ -20,7 +50,7 @@ CPP_DEPS += \
 src/%.o: ../src/%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	g++ -O3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<"
+	g++ -O3 -Wall -c -fmessage-length=0 -pthread -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
