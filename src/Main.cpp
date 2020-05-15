@@ -24,97 +24,131 @@ map<int, vector<std::string>> socket_map;
 commands::GetInfoCmd getInfoCmd;
 commands::TransmitMessageCmd transmitMessageCmd;
 commands::ReceiveMessagesCmd receiveMessagesCmd;
-
+void processCommand(int new_socket, char* buffer);
 //this thread sends MIDI events to the client socket
 //It holds a vector of ports to listen to
+
 void outputThreadFunction(int new_socket)
 {
 	char *hello = "Hello from server\r\n";
 	ssize_t sentBytes;
 	while (true) {
-		/*
+
 		sentBytes = send(new_socket , hello , strlen(hello) , 0 );
     	if(sentBytes >= 0){
 			cout << "sending data to socket: ";
 			cout << new_socket;
 			cout << "\n";
-			std::this_thread::sleep_for (std::chrono::seconds(60));
+			std::this_thread::sleep_for (std::chrono::seconds(10000));
     	}
     	else{
     		printf("client socket disconnected. Existing output thread\n");
     		close(new_socket);
     		return;
     	}
-    	*/
+
     }
 }
-
 //this thread receives commands. It can answer the command,
 //send a MIDI event or set something in the environment
 //(open/close a port and set the ports that a sockets would receive events from)
 void inputThreadFunction(int new_socket)
 {
-	char buffer[1024] = {0};
 	int valread;
 	vector<string> command;
-	int commandLength = 0;
+	std:string commands_str;
+
 	while(true){
+		char in_buffer[1024] = {0};
 		ssize_t valread;
-		valread = read( new_socket , buffer, 1024);
-		printf("%s\n",buffer );
-		if (buffer[0] == 'Q' && buffer[1] == 'Q' && buffer[2] == 'Q') {
+		valread = read( new_socket , in_buffer, 1024);
+		//std::cout << "   Read Input Size: " << valread << "\n";
+		//printf("   %s\n",in_buffer );
+
+		if (valread == -1 || (in_buffer[0] == 'Q' && in_buffer[1] == 'Q' && in_buffer[2] == 'Q')) {
 			printf("client sent disconnect signal. Existing input thread\n");
 			close(new_socket);
 			return;
-		}else{
-
-
-			//TODO: This is a command parser. We should implement a class for that
-			char *token = strtok(buffer, "#");
-			while (token != NULL)
-			{
-				command.push_back(token);
-				token = strtok(NULL, "#");
-			}
-			commandLength = command.size();
-			//create a command object from this string(command builder)
-			if(commandLength > 0){
-				if (command[0].compare("1") == 0) {
-					std::cout << "received a GetInfo command\n";
-					//this is get info
-					string info = getInfoCmd.exec();
-					//std::cout << "InfoString Is: " << info << "\n";
-					const void* infoStr = info.c_str();
-					int len = info.size();
-					//std::cout << "Len Is: " << len << "\n";
-					//TODO: we may have to add it to the sending thread buffer
-					int sentBytes = 0;
-					sentBytes = send(new_socket, infoStr, len, 0);
-
-				} else if (command[0].compare("2") == 0) {
-					//this is send event
-					if(commandLength >= 2){
-						try{
-							transmitMessageCmd.transmitMessage(command[1]);
-						}catch(int ex){
-							std::cout << "Exception: " << ex;
-						}
-					}
-				} else if (command[0].compare("3") == 0) {
-					//this is receive events
-					if(commandLength >= 2){
-						receiveMessagesCmd.receiveMessages(command[1]);
-					}
-				} else {
-
+		}
+		else{
+			commands_str.append(in_buffer, valread);
+		}
+		int start = 0;
+		for(int end=1;end<commands_str.size(); end++){
+			char c = commands_str[end];
+			if(c == '@'){
+				//found the end
+				char chars[end - start];
+				commands_str.copy(chars, end-start, start);
+				processCommand(new_socket, chars);
+				start = end + 1;
+				end = start;
+				if(end == commands_str.size() -1){
+					commands_str.clear();
 				}
-				command.clear();
 			}
+			else{
+				if(end == commands_str.size() -1){
+					commands_str = commands_str.substr(start,commands_str.size());
+				}
+			}
+		}
 
+	} //end of while
+}
+
+
+void processCommand(int new_socket, char* buffer) {
+
+	int commandLength = 0;
+	vector<string> command;
+	if(true) {
+		//TODO: This is a command parser. We should implement a class for that
+		char *token = strtok(buffer, "#");
+		while (token != NULL) {
+			command.push_back(token);
+			token = strtok(NULL, "#");
+		}
+		commandLength = command.size();
+		//create a command object from this string(command builder)
+		if (commandLength > 0) {
+			if (command[0].compare("1") == 0) {
+				//std::cout << "received a GetInfo command\n";
+				//this is get info
+				string info = getInfoCmd.exec();
+				//std::cout << "InfoString Is: " << info << "\n";
+				const void* infoStr = info.c_str();
+				int len = info.size();
+				//std::cout << "Len Is: " << len << "\n";
+				//TODO: we may have to add it to the sending thread buffer
+				int sentBytes = 0;
+				sentBytes = send(new_socket, infoStr, len, 0);
+
+			} else if (command[0].compare("2") == 0) {
+				//this is send event
+				if (commandLength >= 2) {
+					try {
+						transmitMessageCmd.transmitMessage(command[1].substr(0, commandLength - 3));
+					} catch (int ex) {
+						//std::cout << "Exception: " << ex;
+					}
+				}
+			} else if (command[0].compare("3") == 0) {
+				//this is receive events
+				if (commandLength >= 2) {
+					receiveMessagesCmd.receiveMessages(command[1]);
+				}
+			} else {
+
+			}
+			command.clear();
 
 		}
+
 	}
 }
+
+
 
 int main(int argc, char const *argv[])
 {

@@ -22,14 +22,17 @@ StringTokenizer::~StringTokenizer() {
 	// TODO Auto-generated destructor stub
 }
 
-void StringTokenizer::tokenize(char* chars, std::vector<std::string> *v){
+void StringTokenizer::tokenize(std::string cmd, std::vector<std::string> *v){
+	char* chars = strcpy(new char[cmd.length() + 1], cmd.c_str());
+
+	//std::cout << "Tokenizer string: " << chars << "\n";
 	v->clear();
 	char *token = strtok(chars, ".");
 	while (token != NULL)
 	{
-		std::cout << "Pushed Token: " << token << "\n";
+		//std::cout << "Pushed Token: " << token << "\n";
 		v->push_back(token);
 		token = strtok(NULL, ".");
 	}
-	std::cout << "Token Vector Size: " << v->size() << "\n";
+	//std::cout << "Token Vector Size: " << v->size() << "\n";
 }

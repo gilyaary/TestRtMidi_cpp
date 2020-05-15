@@ -51,22 +51,14 @@ TransmitMessageCmd::~TransmitMessageCmd() {
 	 */
 }
 
+StringTokenizer st;
+
 void TransmitMessageCmd::transmitMessage(std::string cmd) {
 
-
-	std::cout << "Command: " << cmd << " Size: " << sizeof(cmd) << "\n";
-
-	StringTokenizer st;
+	//std::cout << "\nCommand: " << cmd << " Size: " << cmd.size() << "\n";
 	std::vector<std::string> v;
-	//char* chars;
-	//strcpy(chars, cmd.c_str());
-	const char* chars = cmd.c_str();
-	char chars_copy [cmd.size()];
-	for(int i=0; i<cmd.size(); i++){
-		chars_copy[i]= chars[i];
-	}
-	st.tokenize(chars_copy, &v);
-	std::cout << "Received Token Vector Size: " << v.size() << "\n";
+	st.tokenize(cmd,&v);
+	//std::cout << "Received Token Vector Size: " << v.size() << "\n";
 	//v.push_back("A");
 	//v.push_back("0");
 	//v.push_back("1");
@@ -77,22 +69,22 @@ void TransmitMessageCmd::transmitMessage(std::string cmd) {
 		int port_number = stoi(port_str);
 		RtMidi::Api api = this->apiMap[api_str];
 		if (api != NULL) {
-			std::cout << "Api Found " << api_str << "\n";
+			//std::cout << "Api Found " << api_str << "\n";
 			RtMidiOut* port_addr = this->apiPorts[api][port_number];
-			std::cout << "Port address " << port_addr << "\n";
+			//std::cout << "Port address " << port_addr << "\n";
 			if (port_addr == 0) {
-				std::cout << "Port Does NOT exist. Creating new Port";
+				//std::cout << "Port Does NOT exist. Creating new Port";
 				this->apiPorts[api][port_number] = new RtMidiOut(api, "client_1");
 				port_addr = this->apiPorts[api][port_number];
 			} else {
-				std::cout << "Port already exists.";
+				//std::cout << "Port already exists.";
 			}
 			if ( ! port_addr->isPortOpen() ){
-				std::cout << "Port closed. Attempting to open";
+				//std::cout << "Port closed. Attempting to open";
 				try{
 					port_addr->openPort(port_number, "PORT-" + port_str);
 				}catch(int ex){
-					std::cout << "Exception when trying to open port. Ex=" << ex;
+					//std::cout << "Exception when trying to open port. Ex=" << ex;
 				}
 			}
 			if ( port_addr->isPortOpen() ){
@@ -100,16 +92,17 @@ void TransmitMessageCmd::transmitMessage(std::string cmd) {
 					std::vector<unsigned char> message;
 					// Note On: 144, 64, 90
 					// Note On: 128, 64, 40
-					std::cout << "vector length: " << v.size() << "\n";
+					//std::cout << "vector length: " << v.size() << "\n";
 					for(int j=2; j<v.size(); j++){
 						int value = stoi(v[j]);
-						std::cout << "Sending Value: " << value << "\n";
+						std::cout << "." << value;
 						message.push_back(value);
 					}
+					std::cout << "\n";
 					port_addr->sendMessage(&message);
 					//TODO: close port command
 				}catch(int ex){
-					std::cout << "Exception Sending Midi. Ex=" << ex;
+					//std::cout << "Exception Sending Midi. Ex=" << ex;
 				}
 			}
 		}

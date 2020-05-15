@@ -16,7 +16,7 @@ class StringTokenizer {
 public:
 	StringTokenizer();
 	virtual ~StringTokenizer();
-	void tokenize(char* chars, std::vector<std::string> *v);
+	void tokenize(std::string cmd, std::vector<std::string> *v);
 };
 
 #endif /* STRINGTOKENIZER_H_ */
