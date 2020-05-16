@@ -28,6 +28,57 @@ void processCommand(int new_socket, char* buffer);
 //this thread sends MIDI events to the client socket
 //It holds a vector of ports to listen to
 
+
+void inputThreadFunction(int new_socket)
+{
+	printf("entering modified input thread function\n");
+	vector<string> command;
+	std:string commands_str;
+	char in_buffer[8092] = {0};
+	ssize_t byte_count;
+	char last_tx_7th_char = '2';
+	int sentBytes = 0;
+
+	do{
+		byte_count = read( new_socket , in_buffer, 8092);
+		if (byte_count == -1 || (in_buffer[0] == 'Q' && in_buffer[1] == 'Q' && in_buffer[2] == 'Q')) {
+			printf("client sent disconnect signal. Existing input thread\n");
+			close(new_socket);
+			return;
+		}
+		//printf(in_buffer);printf("\n");
+		if( byte_count >= 2 ){
+			char command = in_buffer[0];
+			if ( command == '1' ){
+				std::string info = getInfoCmd.exec();
+				const void* infoStr = info.c_str();
+				int len = info.size();
+				sentBytes = send(new_socket, infoStr, len, 0);
+			} else if ( command == '2' ) {
+				if ( in_buffer[byte_count-1] == '@' ) {
+					char midi_command [byte_count-3];
+					for(int i=2; i<byte_count-1; i++){
+						midi_command[i-2] = in_buffer[i];
+						//std::cout << midi_command[i-2];
+					}
+					//std::cout << "\n";
+					try{
+						transmitMessageCmd.transmitMessage(midi_command);
+					}catch(int e){
+						std::cout << "Exception when transmitting midi message: " << e;
+					}
+				}
+				else{
+					std::cout << "incorrect command: " << in_buffer << "\n";
+				}
+			}
+		}
+
+	} while( byte_count > 0 );//end of while
+}
+
+
+
 void outputThreadFunction(int new_socket)
 {
 	char *hello = "Hello from server\r\n";
@@ -49,56 +100,12 @@ void outputThreadFunction(int new_socket)
 
     }
 }
-//this thread receives commands. It can answer the command,
-//send a MIDI event or set something in the environment
-//(open/close a port and set the ports that a sockets would receive events from)
-void inputThreadFunction(int new_socket)
-{
-	int valread;
-	vector<string> command;
-	std:string commands_str;
-
-	while(true){
-		char in_buffer[1024] = {0};
-		ssize_t valread;
-		valread = read( new_socket , in_buffer, 1024);
-		//std::cout << "   Read Input Size: " << valread << "\n";
-		//printf("   %s\n",in_buffer );
-
-		if (valread == -1 || (in_buffer[0] == 'Q' && in_buffer[1] == 'Q' && in_buffer[2] == 'Q')) {
-			printf("client sent disconnect signal. Existing input thread\n");
-			close(new_socket);
-			return;
-		}
-		else{
-			commands_str.append(in_buffer, valread);
-		}
-		int start = 0;
-		for(int end=1;end<commands_str.size(); end++){
-			char c = commands_str[end];
-			if(c == '@'){
-				//found the end
-				char chars[end - start];
-				commands_str.copy(chars, end-start, start);
-				processCommand(new_socket, chars);
-				start = end + 1;
-				end = start;
-				if(end == commands_str.size() -1){
-					commands_str.clear();
-				}
-			}
-			else{
-				if(end == commands_str.size() -1){
-					commands_str = commands_str.substr(start,commands_str.size());
-				}
-			}
-		}
-
-	} //end of while
-}
-
 
 void processCommand(int new_socket, char* buffer) {
+	std::cout << buffer << "\n";
+}
+
+void processCommand2(int new_socket, char* buffer) {
 
 	int commandLength = 0;
 	vector<string> command;
@@ -201,11 +208,12 @@ int main(int argc, char const *argv[])
 		}
 
 		//calling the constractor for thread class
-		std::thread* t_out = new thread(outputThreadFunction,new_socket);
+		//std::thread* t_out = new thread(outputThreadFunction,new_socket);
 		std::thread* t_in = new thread(inputThreadFunction,new_socket);
 		vector<string> prefs;
 		socket_map[new_socket] = prefs;
 		//std::thread::id id = outputThread->get_id();
+		//inputThreadFunction(new_socket);
     }
 
     //do we need to deleteall threads?

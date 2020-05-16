@@ -66,7 +66,12 @@ void TransmitMessageCmd::transmitMessage(std::string cmd) {
 	if (v.size() >= 3) {
 		std::string api_str = v[0];
 		std::string port_str = v[1];
-		int port_number = stoi(port_str);
+		int port_number = 0;
+		try{
+			 port_number = stoi(port_str);
+		}catch(int e){
+
+		}
 		RtMidi::Api api = this->apiMap[api_str];
 		if (api != NULL) {
 			//std::cout << "Api Found " << api_str << "\n";
@@ -84,7 +89,7 @@ void TransmitMessageCmd::transmitMessage(std::string cmd) {
 				try{
 					port_addr->openPort(port_number, "PORT-" + port_str);
 				}catch(int ex){
-					//std::cout << "Exception when trying to open port. Ex=" << ex;
+					std::cout << "Exception when trying to open port. Ex=" << ex;
 				}
 			}
 			if ( port_addr->isPortOpen() ){
@@ -95,10 +100,10 @@ void TransmitMessageCmd::transmitMessage(std::string cmd) {
 					//std::cout << "vector length: " << v.size() << "\n";
 					for(int j=2; j<v.size(); j++){
 						int value = stoi(v[j]);
-						std::cout << "." << value;
+						//std::cout << "." << value;
 						message.push_back(value);
 					}
-					std::cout << "\n";
+					//std::cout << "\n";
 					port_addr->sendMessage(&message);
 					//TODO: close port command
 				}catch(int ex){
