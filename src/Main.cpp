@@ -27,17 +27,14 @@ commands::ReceiveMessagesCmd receiveMessagesCmd;
 void processCommand(int new_socket, char* buffer);
 //this thread sends MIDI events to the client socket
 //It holds a vector of ports to listen to
+void processCommand(char cmd [], int size, int new_socket);
 
 
 void inputThreadFunction(int new_socket)
 {
 	printf("entering modified input thread function\n");
-	vector<string> command;
-	std:string commands_str;
 	char in_buffer[8092] = {0};
 	ssize_t byte_count;
-	char last_tx_7th_char = '2';
-	int sentBytes = 0;
 
 	do{
 		byte_count = read( new_socket , in_buffer, 8092);
@@ -48,34 +45,52 @@ void inputThreadFunction(int new_socket)
 		}
 		//printf(in_buffer);printf("\n");
 		if( byte_count >= 2 ){
-			char command = in_buffer[0];
-			if ( command == '1' ){
-				std::string info = getInfoCmd.exec();
-				const void* infoStr = info.c_str();
-				int len = info.size();
-				sentBytes = send(new_socket, infoStr, len, 0);
-			} else if ( command == '2' ) {
-				if ( in_buffer[byte_count-1] == '@' ) {
-					char midi_command [byte_count-3];
-					for(int i=2; i<byte_count-1; i++){
-						midi_command[i-2] = in_buffer[i];
+
+			int start_from = 0;
+			for(int i=0; i<byte_count; i++){
+				if(in_buffer[i] == '@'){
+					//std::cout << "found delimiter\n";
+					int command_size = i-start_from;
+					if(command_size > 0){
+						char command [command_size];
+						for(int k=start_from; k<i; k++){
+							command[k-start_from] = in_buffer[k];
+						}
 						//std::cout << midi_command[i-2];
+						try{
+							processCommand(command, command_size, new_socket);
+							std::cout << "command: " << command << "\n";
+						}catch(int e){
+							std::cout << "Exception when transmitting midi message: " << e;
+						}
 					}
-					//std::cout << "\n";
-					try{
-						transmitMessageCmd.transmitMessage(midi_command);
-					}catch(int e){
-						std::cout << "Exception when transmitting midi message: " << e;
-					}
-				}
-				else{
-					std::cout << "incorrect command: " << in_buffer << "\n";
+					start_from = i+1;
 				}
 			}
 		}
-
 	} while( byte_count > 0 );//end of while
 }
+
+void processCommand(char cmd [], int size, int new_socket){
+	char command = cmd[0];
+	if ( command == '1' ){
+		std::string info = getInfoCmd.exec();
+		const void* infoStr = info.c_str();
+		int len = info.size();
+		int sentBytes = send(new_socket, infoStr, len, 0);
+	} else if ( command == '2' ) {
+		char midi_command [size-2];
+		for(int i=2; i<size;i++){
+			midi_command[i-2] = cmd[i];
+		}
+		transmitMessageCmd.transmitMessage(midi_command, size);
+	}
+	else{
+		std::cout << "incorrect command: " << cmd << "\n";
+	}
+
+}
+
 
 
 
@@ -104,58 +119,6 @@ void outputThreadFunction(int new_socket)
 void processCommand(int new_socket, char* buffer) {
 	std::cout << buffer << "\n";
 }
-
-void processCommand2(int new_socket, char* buffer) {
-
-	int commandLength = 0;
-	vector<string> command;
-	if(true) {
-		//TODO: This is a command parser. We should implement a class for that
-		char *token = strtok(buffer, "#");
-		while (token != NULL) {
-			command.push_back(token);
-			token = strtok(NULL, "#");
-		}
-		commandLength = command.size();
-		//create a command object from this string(command builder)
-		if (commandLength > 0) {
-			if (command[0].compare("1") == 0) {
-				//std::cout << "received a GetInfo command\n";
-				//this is get info
-				string info = getInfoCmd.exec();
-				//std::cout << "InfoString Is: " << info << "\n";
-				const void* infoStr = info.c_str();
-				int len = info.size();
-				//std::cout << "Len Is: " << len << "\n";
-				//TODO: we may have to add it to the sending thread buffer
-				int sentBytes = 0;
-				sentBytes = send(new_socket, infoStr, len, 0);
-
-			} else if (command[0].compare("2") == 0) {
-				//this is send event
-				if (commandLength >= 2) {
-					try {
-						transmitMessageCmd.transmitMessage(command[1].substr(0, commandLength - 3));
-					} catch (int ex) {
-						//std::cout << "Exception: " << ex;
-					}
-				}
-			} else if (command[0].compare("3") == 0) {
-				//this is receive events
-				if (commandLength >= 2) {
-					receiveMessagesCmd.receiveMessages(command[1]);
-				}
-			} else {
-
-			}
-			command.clear();
-
-		}
-
-	}
-}
-
-
 
 int main(int argc, char const *argv[])
 {

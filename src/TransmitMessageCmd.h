@@ -36,7 +36,7 @@ class TransmitMessageCmd: public RtMidiCommand {
 public:
 	TransmitMessageCmd();
 	virtual ~TransmitMessageCmd();
-	void transmitMessage(std::string str);
+	void transmitMessage(char cmd [], int size);
 private:
 	std::map<RtMidi::Api,std::map<int,RtMidiOut*>> apiPorts;
 	std::map<std::string, RtMidi::Api> apiMap;
