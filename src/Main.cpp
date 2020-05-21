@@ -69,6 +69,7 @@ void inputThreadFunction(int new_socket)
 			}
 		}
 	} while( byte_count > 0 );//end of while
+	std::cout << "Exit Input loop\n";
 }
 
 void processCommand(char cmd [], int size, int new_socket){
@@ -105,7 +106,7 @@ void outputThreadFunction(int new_socket)
 			cout << "sending data to socket: ";
 			cout << new_socket;
 			cout << "\n";
-			std::this_thread::sleep_for (std::chrono::seconds(10000));
+			std::this_thread::sleep_for (std::chrono::seconds(1000));
     	}
     	else{
     		printf("client socket disconnected. Existing output thread\n");

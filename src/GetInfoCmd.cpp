@@ -80,7 +80,7 @@ std::string GetInfoCmd::exec() {
 				output += "\"},\n";
 			}
 			output += "\t]\n";
-			output += "},\n";
+			output += "},\n@@@\n";
 		} catch ( RtMidiError &error ) {
 			error.printMessage();
 		}
