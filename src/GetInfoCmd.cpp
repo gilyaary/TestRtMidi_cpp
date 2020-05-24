@@ -80,15 +80,16 @@ std::string GetInfoCmd::exec() {
 				output += "\"},\n";
 			}
 			output += "\t]\n";
-			output += "},\n@@@\n";
+			output += "}\n";
 		} catch ( RtMidiError &error ) {
 			error.printMessage();
 		}
 
 		delete midiin;
 		delete midiout;
+		output += ",\n";
 	}
-	output += "]}\n";
+	output += "]}\n@@@\n";
 
 	return output;
 }
