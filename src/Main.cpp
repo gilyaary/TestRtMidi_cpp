@@ -12,6 +12,7 @@
 #include <map>
 #include <vector>
 #include "GetInfoCmd.h"
+#include "SetPortsCmd.h"
 #include "TransmitMessageCmd.h"
 #include "ReceiveMessagesCmd.h"
 
@@ -22,13 +23,15 @@ using namespace std;
 map<int, vector<std::string>> socket_map;
 
 commands::GetInfoCmd getInfoCmd;
+commands::SetPortsCmd setPortsCmd;
 commands::TransmitMessageCmd transmitMessageCmd;
 commands::ReceiveMessagesCmd receiveMessagesCmd;
 void processCommand(int new_socket, char* buffer);
 //this thread sends MIDI events to the client socket
 //It holds a vector of ports to listen to
 void processCommand(char cmd [], int size, int new_socket);
-
+void incomingMidiEventCallback( double deltatime, std::vector< unsigned char > *message, void */*userData*/ );
+int inputPortsStatus [20];
 
 void inputThreadFunction(int new_socket)
 {
@@ -72,6 +75,12 @@ void inputThreadFunction(int new_socket)
 	std::cout << "Exit Input loop\n";
 }
 
+int getLength(char str []){
+	int i = 1;
+	for( ; str[i] != '\0'; i++);
+	return i;
+}
+
 void processCommand(char cmd [], int size, int new_socket){
 	char command = cmd[0];
 	if ( command == '1' ){
@@ -85,6 +94,12 @@ void processCommand(char cmd [], int size, int new_socket){
 			midi_command[i-2] = cmd[i];
 		}
 		transmitMessageCmd.transmitMessage(midi_command, size);
+	} else if ( command == '3' ) {
+		char midi_command [size-2];
+		for(int i=2; i<size;i++){
+			midi_command[i-2] = cmd[i];
+		}
+		setPortsCmd.exec(midi_command, size, &incomingMidiEventCallback);
 	}
 	else{
 		std::cout << "incorrect command: " << cmd << "\n";
@@ -94,6 +109,16 @@ void processCommand(char cmd [], int size, int new_socket){
 
 
 
+void incomingMidiEventCallback( double deltatime, std::vector< unsigned char > *message, void *userData )
+{
+  unsigned int nBytes = message->size();
+  for ( unsigned int i=0; i<nBytes; i++ )
+    std::cout << "Byte " << i << " = " << (int)message->at(i) << ", ";
+  if ( nBytes > 0 )
+    std::cout << "stamp = " << deltatime << std::endl;
+  PortInfo *portInfo = (PortInfo *) userData;
+  std::cout << "UserMessage = " << portInfo->getName()  << std::endl;
+}
 
 void outputThreadFunction(int new_socket)
 {
@@ -106,7 +131,7 @@ void outputThreadFunction(int new_socket)
 			cout << "sending data to socket: ";
 			cout << new_socket;
 			cout << "\n";
-			std::this_thread::sleep_for (std::chrono::seconds(1000));
+			std::this_thread::sleep_for (std::chrono::seconds(100));
     	}
     	else{
     		printf("client socket disconnected. Existing output thread\n");
@@ -124,10 +149,28 @@ void processCommand(int new_socket, char* buffer) {
 int main(int argc, char const *argv[])
 {
 
+	//TODO: Create VIRTUAL Input/Output ports for EACH track
+	//Close those ports when client disconnects
+	//We can later connect Outputs to inputs
+
+	//To display all alsa connections use: aconnect -i
+	//This way we can easily control the connections
+	//the C++ program rtmidi is only used to relay messages to/from end clients (in any technology that supports TCP)
+	//This rtmidi is usedas a "MIDI proxy server" or "MIDI Gateway"
 	int server_fd, new_socket;
     struct sockaddr_in address;
     int opt = 1;
     int addrlen = sizeof(address);
+
+//    for(int j=0; j<20; j++){
+//    	inputPortsStatus[j] = 0;
+//    }
+//
+//    RtMidiIn* midiin1 = new RtMidiIn(RtMidi::Api::LINUX_ALSA); midiin1->openVirtualPort( "IN_PORT_1" ); midiin1->setCallback( &incomingMidiEventCallback );
+//	RtMidiIn* midiin2 = new RtMidiIn(RtMidi::Api::LINUX_ALSA); midiin2->openVirtualPort( "IN_PORT_2" ); midiin2->setCallback( &incomingMidiEventCallback );
+//	RtMidiIn* midiin3 = new RtMidiIn(RtMidi::Api::LINUX_ALSA); midiin3->openVirtualPort( "IN_PORT_3" ); midiin3->setCallback( &incomingMidiEventCallback );
+//	RtMidiIn* midiin4 = new RtMidiIn(RtMidi::Api::LINUX_ALSA); midiin4->openVirtualPort( "IN_PORT_4" ); midiin4->setCallback( &incomingMidiEventCallback );
+//	RtMidiIn* midiin5 = new RtMidiIn(RtMidi::Api::LINUX_ALSA); midiin5->openVirtualPort( "IN_PORT_5" ); midiin5->setCallback( &incomingMidiEventCallback );
 
     //char *hello = "200 OK Hello from server\r\n";
 
@@ -172,7 +215,7 @@ int main(int argc, char const *argv[])
 		}
 
 		//calling the constractor for thread class
-		//std::thread* t_out = new thread(outputThreadFunction,new_socket);
+		std::thread* t_out = new thread(outputThreadFunction,new_socket);
 		std::thread* t_in = new thread(inputThreadFunction,new_socket);
 		vector<string> prefs;
 		socket_map[new_socket] = prefs;

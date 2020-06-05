@@ -9,9 +9,11 @@ CPP_SRCS += \
 ../src/GetInfoCmd.cpp \
 ../src/GetInfoCmd_test.cpp \
 ../src/Main.cpp \
+../src/PortInfo.cpp \
 ../src/ReceiveMessagesCmd.cpp \
 ../src/ReceiveMessagesCmd_test.cpp \
 ../src/RtMidiCommand.cpp \
+../src/SetPortsCmd.cpp \
 ../src/StringTokenizer.cpp \
 ../src/TransmitMessageCmd.cpp \
 ../src/TransmitMessageCmd_test.cpp \
@@ -23,9 +25,11 @@ OBJS += \
 ./src/GetInfoCmd.o \
 ./src/GetInfoCmd_test.o \
 ./src/Main.o \
+./src/PortInfo.o \
 ./src/ReceiveMessagesCmd.o \
 ./src/ReceiveMessagesCmd_test.o \
 ./src/RtMidiCommand.o \
+./src/SetPortsCmd.o \
 ./src/StringTokenizer.o \
 ./src/TransmitMessageCmd.o \
 ./src/TransmitMessageCmd_test.o \
@@ -37,9 +41,11 @@ CPP_DEPS += \
 ./src/GetInfoCmd.d \
 ./src/GetInfoCmd_test.d \
 ./src/Main.d \
+./src/PortInfo.d \
 ./src/ReceiveMessagesCmd.d \
 ./src/ReceiveMessagesCmd_test.d \
 ./src/RtMidiCommand.d \
+./src/SetPortsCmd.d \
 ./src/StringTokenizer.d \
 ./src/TransmitMessageCmd.d \
 ./src/TransmitMessageCmd_test.d \
