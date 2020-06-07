@@ -9,7 +9,6 @@
 
 namespace commands {
 
-std::map<int, PortInfo*> port_map;
 /*
  Midi set port command syntax:
 
@@ -54,7 +53,7 @@ SetPortsCmd::~SetPortsCmd() {
 }
 
 std::string SetPortsCmd::exec(char midi_command[], int size, RtMidiIn::RtMidiCallback incomingMidiEventCallback ) {
-	std::cout << "Received Command to set Port (3): " << midi_command << "\n";
+	std::cout << "Received Command to set Port: " << midi_command << "\n";
 
 
 	int valid_fields[] = { 0, 0, 0, 0, 0 };
@@ -151,16 +150,23 @@ std::string SetPortsCmd::exec(char midi_command[], int size, RtMidiIn::RtMidiCal
 
 			midiin->setCallback(incomingMidiEventCallback , portInfo);
 			midiin->ignoreTypes(false, false, false);
-			//midiin->cancelCallback();
-			//midiin->closePort();
-			//midiin->getPortCount();
-			//midiin->getPortName(0);
-			//midiin->isPortOpen();
-
+			portInfo->setMidiin(midiin);
 		}
 	}
 
-	return "";
+	return "OK\n@@@\n";
+}
+
+void SetPortsCmd::remove( int portNumber ) {
+	PortInfo* portInfo = this->port_map[portNumber];
+	RtMidiIn* midiin = portInfo->getMidiin();
+	midiin->cancelCallback();
+	if(midiin->isPortOpen()){
+		midiin->closePort();
+		//midiin->getPortCount();
+		//midiin->getPortName(0);
+	}
+	this->port_map.erase(portNumber);
 }
 
 int calcSize(char* str){

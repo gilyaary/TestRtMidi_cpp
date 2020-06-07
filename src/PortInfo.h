@@ -9,6 +9,7 @@
 #define PORTINFO_H_
 
 #include <string>
+#include "RtMidi.h"
 
 enum ApiType {ALSA,JACK};
 enum PortType {VIRTUAL, REAL};
@@ -60,15 +61,21 @@ public:
 		this->portType = portType;
 	}
 
+	RtMidiIn* getMidiin() const {
+		return midiin;
+	}
+
+	void setMidiin(RtMidiIn* midiin) {
+		this->midiin = midiin;
+	}
+
 private:
 	ApiType apiType;
 	PortType portType;
 	PortDirection portDirection;
 	int portNumber = 0;
 	std::string name;
-
-
-
+	RtMidiIn* midiin;
 };
 
 

@@ -89,7 +89,7 @@ std::string GetInfoCmd::exec() {
 		delete midiout;
 		output += ",\n";
 	}
-	output += "]}\n@@@\n";
+	output += "]}\r\n@@@\r\n";
 
 	return output;
 }

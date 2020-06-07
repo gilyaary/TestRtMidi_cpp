@@ -31,6 +31,9 @@ public:
 	SetPortsCmd();
 	virtual ~SetPortsCmd();
 	std::string exec(char cmd [], int size, RtMidiIn::RtMidiCallback incomingMidiEventCallback);
+	void remove( int portNumber );
+private:
+	std::map<int, PortInfo*> port_map;
 };
 
 } /* namespace commands */
